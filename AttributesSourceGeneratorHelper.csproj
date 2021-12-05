@@ -10,6 +10,9 @@
 			To use, simply create attribute classes in c# and inherit from Attribute which will generate helpers so source generators using it will have helpers to detect attributes.
 		</Description>
 		<Version>1.0.1</Version>
+		<PackageProjectUrl>https://github.com/musictopia2/AttributesSourceGeneratorHelper</PackageProjectUrl>
+		<Company>None</Company>
+		<Authors>musictopia</Authors>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
