@@ -14,7 +14,7 @@ internal class SyntaxReceiver : ISyntaxReceiver
     public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
     {
         if (syntaxNode is ClassDeclarationSyntax classDeclarationSyntax &&
-            classDeclarationSyntax.HasClass("Attribute")
+            classDeclarationSyntax.Implements("Attribute")
             )
         {
             CandidateClasses.Add(classDeclarationSyntax);
