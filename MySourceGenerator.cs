@@ -3,10 +3,11 @@ using CommonBasicLibraries.AdvancedGeneralFunctionsAndProcesses.Misc;
 using CommonBasicLibraries.CollectionClasses;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections.Immutable;
 using System.Text;
 namespace AttributesSourceGeneratorHelper;
-[Generator] //this is important so it knows this class is a generator which will generate code for a class using it.
-public class MySourceGenerator : ISourceGenerator
+[Generator]
+public class MySourceGenerator : IIncrementalGenerator
 {
     private BasicList<string> GetList<T>(BasicList<T> list, Func<T, string> field)
     {
@@ -40,7 +41,7 @@ public class MySourceGenerator : ISourceGenerator
         string propertyCode;
         propertyCode = $@"    private const string _code{name} = @""{content}"";";
         string compilation = $"        compilation = compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(SourceText.From(_code{name}, Encoding.UTF8), options));";
-        string source = $@"        context.AddSource(""{name}"", SourceText.From(_code{name}, Encoding.UTF8));";
+        string source = $@"        context.AddSource(""{name}"", _code{name});";
         return new(propertyCode, compilation, source);
     }
     private string GetConstructors(ClassDeclarationSyntax clazz, Compilation compilation)
@@ -78,16 +79,34 @@ public class MySourceGenerator : ISourceGenerator
         results = results.Replace("(, ", "("); //unfortunately had to do this part to remove the beginning , part.
         return results;
     }
-    public void Execute(GeneratorExecutionContext context)
+    private bool IsSyntaxTarget(SyntaxNode syntax)
     {
-        if (context.SyntaxReceiver is not SyntaxReceiver receiver)
+        return syntax is ClassDeclarationSyntax ctx &&
+            ctx.Implements("Attribute");
+    }
+    private ClassDeclarationSyntax? GetTarget(GeneratorSyntaxContext context)
+    {
+        var ourClass = context.GetClassNode();
+        return ourClass;
+    }
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        IncrementalValuesProvider<ClassDeclarationSyntax> declares = context.SyntaxProvider.CreateSyntaxProvider(
+            (s, _) => IsSyntaxTarget(s),
+            (t, _) => GetTarget(t))
+            .Where(m => m != null)!;
+        IncrementalValueProvider<(Compilation, ImmutableArray<ClassDeclarationSyntax>)> compilation
+            = context.CompilationProvider.Combine(declares.Collect());
+        context.RegisterSourceOutput(compilation, (spc, source) =>
         {
-            return;
-        }
-        Compilation compilation = context.Compilation;
-        BasicList<ClassInfo> list = new();
+            Execute(source.Item1, source.Item2, spc);
+        });
+    }
+    private void Execute(Compilation compilation, ImmutableArray<ClassDeclarationSyntax> list, SourceProductionContext context)
+    {
+        BasicList<ClassInfo> others = new();
         string source;
-        foreach (var ourClass in receiver.CandidateClasses)
+        foreach (var ourClass in list)
         {
             string className = ourClass.Identifier.ValueText;
             string content = ourClass.SyntaxTree.ToString();
@@ -98,15 +117,11 @@ public class MySourceGenerator : ISourceGenerator
                 content = ourClass.AppendCodeText(content, extras);
             }
             content = content.GetCSharpString();
-            content = content.RemoveAttribute("Required"); //i think this too.  hopefully this simple.
+            content = content.RemoveAttribute("Required");
             INamedTypeSymbol symbol = compilation.GetClassSymbol(ourClass);
             var properties = symbol.GetProperties();
             string shortName = className.Replace("Attribute", "");
-            list.Add(GetClass(shortName, content));
-           
-            //needs some other source though.
-            //because each of the classes needs its own helpers to get the information needed.
-            //otherwise, can have conflicts (which is bad).
+            others.Add(GetClass(shortName, content));
             BasicList<string> helps = GetAttributeProperties(properties, className);
             source = @$"namespace {compilation.AssemblyName}.AttributeHelpers;
 internal static class {shortName}
@@ -116,6 +131,9 @@ internal static class {shortName}
 ";
             context.AddSource($"{shortName}.g", source);
         }
+        //i am guessing that only the standard ones needs the extension to getcompilationwithattributes.
+        //the incremental one hopefully does not require it.
+        //only keep it to support incremental source generators.
         source = @$"global using aa = {compilation.AssemblyName}.AttributeHelpers;
 namespace {compilation.AssemblyName};
 using Microsoft.CodeAnalysis;
@@ -124,20 +142,20 @@ using Microsoft.CodeAnalysis.Text;
 using System.Text;
 internal static class Extensions
 {{
-{string.Join(Environment.NewLine, GetList(list, xx => xx.Code))}
+{string.Join(Environment.NewLine, GetList(others, xx => xx.Code))}
     internal static Compilation GetCompilationWithAttributes(this GeneratorExecutionContext context)
     {{
-{string.Join(Environment.NewLine, GetList(list, xx => xx.AddSource))}
+{string.Join(Environment.NewLine, GetList(others, xx => xx.AddSource))}
         var options = context.Compilation.SyntaxTrees.First().Options as CSharpParseOptions;
         Compilation compilation = context.Compilation;
-{string.Join(Environment.NewLine, GetList(list, xx => xx.Compilation))}
+{string.Join(Environment.NewLine, GetList(others, xx => xx.Compilation))}
         return compilation;
+    }}
+    internal static void AddAttributesToSourceOnly(this IAddSource context)
+    {{
+{string.Join(Environment.NewLine, GetList(others, xx => xx.AddSource))}
     }}
 }}";
         context.AddSource("Extensions.g", source);
-    }
-    public void Initialize(GeneratorInitializationContext context)
-    {
-        context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
     }
 }

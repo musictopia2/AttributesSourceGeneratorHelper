@@ -10,7 +10,7 @@
 			This is a source generator that generates source code to help another source generator deal with attributes.
 			To use, simply create attribute classes in c# and inherit from Attribute which will generate helpers so source generators using it will have helpers to detect attributes.
 		</Description>
-		<Version>2.0.1</Version>
+		<Version>3.0.1</Version>
 		<PackageProjectUrl>https://github.com/musictopia2/AttributesSourceGeneratorHelper</PackageProjectUrl>
 		<Company>None</Company>
 		<Authors>musictopia</Authors>
@@ -19,7 +19,7 @@
 		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="CommonSourceGeneratorsHelpers" Version="1.0.7" />
+		<PackageReference Include="CommonSourceGeneratorsHelpers" Version="2.0.6" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3" PrivateAssets="all" />
 		<PackageReference Include="SourceGeneratorsAttributesLibrary" Version="1.0.1" />
