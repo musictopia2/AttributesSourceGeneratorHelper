@@ -145,14 +145,7 @@ using System.Linq;
 internal static class Extensions
 {{
 {string.Join(Constants.VBCrLf, GetList(others, xx => xx.Code))}
-    internal static Compilation GetCompilationWithAttributes(this GeneratorExecutionContext context)
-    {{
-{string.Join(Constants.VBCrLf, GetList(others, xx => xx.AddSource))}
-        var options = context.Compilation.SyntaxTrees.First().Options as CSharpParseOptions;
-        Compilation compilation = context.Compilation;
-{string.Join(Constants.VBCrLf, GetList(others, xx => xx.Compilation))}
-        return compilation;
-    }}
+    
     internal static void AddAttributesToSourceOnly(this IAddSource context)
     {{
 {string.Join(Constants.VBCrLf, GetList(others, xx => xx.AddSource))}
