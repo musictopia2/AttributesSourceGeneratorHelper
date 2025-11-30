@@ -141,6 +141,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System.Text;
+using System.Linq;
 internal static class Extensions
 {{
 {string.Join(Constants.VBCrLf, GetList(others, xx => xx.Code))}
