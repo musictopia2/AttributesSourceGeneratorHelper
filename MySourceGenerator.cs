@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
 using System.Text;
+using CommonBasicLibraries.BasicDataSettingsAndProcesses;
 namespace AttributesSourceGeneratorHelper;
 [Generator]
 public class MySourceGenerator : IIncrementalGenerator
@@ -65,15 +66,15 @@ public class MySourceGenerator : IIncrementalGenerator
 
         });
         cats.AddToString(")");
-        cats.AddToString(Environment.NewLine);
+        cats.AddToString(Constants.VBCrLf);
         cats.AddToString("    {");
         properties.ForEach(p =>
         {
             string firsts = p.Name;
             string parameter = firsts.ChangeCasingForVariable(EnumVariableCategory.ParameterCamelCase);
-            cats.AddToString($"        {firsts} = {parameter};", Environment.NewLine);
+            cats.AddToString($"        {firsts} = {parameter};", Constants.VBCrLf);
         });
-        cats.AddToString(Environment.NewLine);
+        cats.AddToString(Constants.VBCrLf);
         cats.AddToString("    }");
         string results = cats.GetInfo();
         results = results.Replace("(, ", "("); //unfortunately had to do this part to remove the beginning , part.
@@ -126,7 +127,7 @@ public class MySourceGenerator : IIncrementalGenerator
             source = @$"namespace {compilation.AssemblyName}.AttributeHelpers;
 internal static class {shortName}
 {{
-{string.Join(Environment.NewLine, helps)}
+{string.Join(Constants.VBCrLf, helps)}
 }}
 ";
             context.AddSource($"{shortName}.g", source);
@@ -142,18 +143,18 @@ using Microsoft.CodeAnalysis.Text;
 using System.Text;
 internal static class Extensions
 {{
-{string.Join(Environment.NewLine, GetList(others, xx => xx.Code))}
+{string.Join(Constants.VBCrLf, GetList(others, xx => xx.Code))}
     internal static Compilation GetCompilationWithAttributes(this GeneratorExecutionContext context)
     {{
-{string.Join(Environment.NewLine, GetList(others, xx => xx.AddSource))}
+{string.Join(Constants.VBCrLf, GetList(others, xx => xx.AddSource))}
         var options = context.Compilation.SyntaxTrees.First().Options as CSharpParseOptions;
         Compilation compilation = context.Compilation;
-{string.Join(Environment.NewLine, GetList(others, xx => xx.Compilation))}
+{string.Join(Constants.VBCrLf, GetList(others, xx => xx.Compilation))}
         return compilation;
     }}
     internal static void AddAttributesToSourceOnly(this IAddSource context)
     {{
-{string.Join(Environment.NewLine, GetList(others, xx => xx.AddSource))}
+{string.Join(Constants.VBCrLf, GetList(others, xx => xx.AddSource))}
     }}
 }}";
         context.AddSource("Extensions.g", source);
